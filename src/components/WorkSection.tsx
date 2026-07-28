@@ -11,7 +11,7 @@ const imgPhotoLeft1 = "/images/work-photo-left1.png";
 const imgPhotoLeft2 = "/images/work-photo-left2.png";
 const imgPhotoRight1 = "/images/work-photo-right1.png";
 const imgPhotoRight2 = "/images/work-photo-right2.png";
-const imgShell = "/images/work-shell.png";
+const imgCard = "/images/work-card.png";
 const imgTornStrip = "/images/work-torn-strip.png";
 
 export default function WorkSection() {
@@ -62,33 +62,50 @@ export default function WorkSection() {
             <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-contain" src={imgPin} />
           </div>
 
-          {/* photo row */}
-          <div className="absolute left-[-60px] top-[190px] h-[520px] w-[480px] overflow-hidden">
+          {/* one continuous photo band along the bottom */}
+          {/* sweater/sunglasses guy, far left */}
+          <div className="absolute left-[-50px] top-[430px] h-[594px] w-[500px] overflow-hidden rotate-[-4deg]">
             <img
               alt=""
               className="pointer-events-none absolute inset-0 size-full max-w-none object-cover"
-              style={{ objectPosition: "48% 48%" }}
+              style={{ objectPosition: "44% 58%" }}
               src={imgPhotoLeft1}
             />
           </div>
-          <div className="absolute left-[280px] top-[390px] h-[290px] w-[230px] overflow-hidden">
-            <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover" src={imgPhotoLeft2} />
+
+          {/* ace of spades card, peeking above the seam */}
+          <div className="absolute left-[440px] top-[350px] h-[190px] w-[135px] rotate-[8deg]">
+            <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-contain" src={imgCard} />
           </div>
-          <div className="absolute left-[430px] top-[430px] h-[260px] w-[320px] overflow-hidden">
+
+          {/* turban guy pointing */}
+          <div className="absolute left-[470px] top-[470px] h-[554px] w-[330px] overflow-hidden">
             <img
               alt=""
               className="pointer-events-none absolute inset-0 size-full max-w-none object-cover"
-              style={{ objectPosition: "45% 40%" }}
+              style={{ objectPosition: "68% 25%" }}
+              src={imgPhotoLeft2}
+            />
+          </div>
+
+          {/* drink guy, yellow tint */}
+          <div className="absolute left-[690px] top-[420px] h-[604px] w-[500px] overflow-hidden rotate-[2deg]">
+            <img
+              alt=""
+              className="pointer-events-none absolute inset-0 size-full max-w-none object-cover"
+              style={{ objectPosition: "50% 30%" }}
               src={imgPhotoRight2}
             />
           </div>
-          <div className="absolute left-[660px] top-[210px] h-[440px] w-[300px] overflow-hidden">
-            <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover object-top" src={imgPhotoRight1} />
-          </div>
 
-          {/* seashell */}
-          <div className="absolute left-[95px] top-[500px] h-[90px] w-[220px]">
-            <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-contain" src={imgShell} />
+          {/* glasses guy sitting, right edge */}
+          <div className="absolute left-[1170px] top-[300px] h-[724px] w-[350px] overflow-hidden">
+            <img
+              alt=""
+              className="pointer-events-none absolute inset-0 size-full max-w-none object-cover"
+              style={{ objectPosition: "50% 18%" }}
+              src={imgPhotoRight1}
+            />
           </div>
         </motion.div>
       </div>
