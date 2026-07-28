@@ -22,8 +22,8 @@ export default function UpcomingReleasesSection() {
             y: [-15.69, -15.69, 0.31, 0.31, -5.69, -5.69, 0, 0],
           }}
           transition={{
-            x: { duration: 0.6, ease: EASE, times: [0, 0.0724, 0.0725, 0.1479, 0.148, 0.2219, 0.222, 0.2864, 0.2865, 0.3724, 0.3725, 1] },
-            y: { duration: 0.6, ease: EASE, times: [0, 0.0724, 0.0725, 0.1479, 0.148, 0.2219, 0.222, 1] },
+            x: { duration: 2, ease: EASE, times: [0, 0.0724, 0.0725, 0.1479, 0.148, 0.2219, 0.222, 0.2864, 0.2865, 0.3724, 0.3725, 1] },
+            y: { duration: 2, ease: EASE, times: [0, 0.0724, 0.0725, 0.1479, 0.148, 0.2219, 0.222, 1] },
           }}
         />
 
@@ -42,7 +42,7 @@ export default function UpcomingReleasesSection() {
           initial={{ y: 1034 }}
           animate={{ y: [1034, 1034, 868, 868, 653, 653, 517, 517, 329, 329, 204, 204, 0, 0] }}
           transition={{
-            duration: 0.6,
+            duration: 2,
             ease: EASE,
             times: [0, 0.0794, 0.0795, 0.1619, 0.162, 0.2199, 0.22, 0.2674, 0.2675, 0.3129, 0.313, 0.3389, 0.339, 1],
           }}
