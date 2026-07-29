@@ -6,8 +6,8 @@ export default function CoFounder() {
   return (
     <SectionVideo
       dataName="co-founder"
-      desktopSrc="/videos/cofounder.mp4"
-      mobileSrc="/videos/mobile/cofounder.mp4"
+      desktopSrc="/desktop-sections/cofounder.mp4"
+      mobileSrc="/mobile-sections/co%20founder%20%40%20vhs.mp4"
     />
   );
 }

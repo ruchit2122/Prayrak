@@ -6,8 +6,8 @@ export default function KohrraSection() {
   return (
     <SectionVideo
       dataName="kohrra"
-      desktopSrc="/videos/kohrra.mp4"
-      mobileSrc="/videos/mobile/kohrra.mp4"
+      desktopSrc="/desktop-sections/kohrra.mp4"
+      mobileSrc="/mobile-sections/kohrra.mp4"
     />
   );
 }

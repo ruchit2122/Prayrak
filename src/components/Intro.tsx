@@ -12,7 +12,7 @@ export default function Intro() {
         <video
           ref={desktopVideoRef}
           className="hidden w-full h-auto md:block"
-          src="/videos/intro.mp4"
+          src="/desktop-sections/intro.mp4"
           preload="auto"
           autoPlay
           muted
@@ -21,7 +21,7 @@ export default function Intro() {
         <video
           ref={mobileVideoRef}
           className="block w-full h-auto md:hidden"
-          src="/videos/mobile/intro.mp4"
+          src="/mobile-sections/start.mp4"
           preload="auto"
           autoPlay
           muted

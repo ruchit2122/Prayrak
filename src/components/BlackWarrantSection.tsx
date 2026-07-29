@@ -6,8 +6,8 @@ export default function BlackWarrantSection() {
   return (
     <SectionVideo
       dataName="black warrant"
-      desktopSrc="/videos/black-warrant.mp4"
-      mobileSrc="/videos/mobile/black-warrant.mp4"
+      desktopSrc="/desktop-sections/black%20warrant.mp4"
+      mobileSrc="/mobile-sections/black%20warrant.mp4"
     />
   );
 }

@@ -6,8 +6,8 @@ export default function ShadowsSection() {
   return (
     <SectionVideo
       dataName="shadows of the moonless nights"
-      desktopSrc="/videos/shadows.mp4"
-      mobileSrc="/videos/mobile/shadows.mp4"
+      desktopSrc="/desktop-sections/shadows%20of%20the%20moonless%20nights.mp4"
+      mobileSrc="/mobile-sections/shadows%20of%20moonless%20nights.mp4"
     />
   );
 }

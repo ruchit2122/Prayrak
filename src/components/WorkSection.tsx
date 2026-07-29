@@ -6,8 +6,8 @@ export default function WorkSection() {
   return (
     <SectionVideo
       dataName="work"
-      desktopSrc="/videos/work.mp4"
-      mobileSrc="/videos/mobile/work.mp4"
+      desktopSrc="/desktop-sections/work.mp4"
+      mobileSrc="/mobile-sections/work.mp4"
     />
   );
 }
