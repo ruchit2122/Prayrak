@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "motion/react";
+import { useRef } from "react";
+import { motion, useInView } from "motion/react";
 
 const imgNewsprintTexture = "/images/about-blue-blob.jpg";
 const imgPortrait = "/images/about-portrait-top.png";
@@ -39,8 +40,15 @@ function stepValues(start: number, end: number, fracs: number[]) {
 }
 
 export default function AboutThisGuy() {
+  const sectionRef = useRef<HTMLElement>(null);
+  // Elements slide in from far outside the section's clipped bounds, so
+  // whileInView on each element never intersects. Watch the section itself
+  // instead and drive every child's animation off that single flag.
+  const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
+
   return (
     <section
+      ref={sectionRef}
       className="relative w-full overflow-hidden bg-[#fffce8]"
       style={{ aspectRatio: "1440 / 1024" }}
     >
@@ -61,7 +69,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[45px] top-[60px] h-[470px] w-[470px] opacity-70"
             initial={{ opacity: 0, scale: 0.7 }}
-            animate={{ opacity: 0.7, scale: 1 }}
+            animate={isInView ? { opacity: 0.7, scale: 1 } : undefined}
             transition={{ duration: 2, ease: EASE, times: [0, 0.25, 1] }}
           >
             <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-contain" src={imgStarburst} />
@@ -71,7 +79,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[-40px] top-[90px] h-[220px] w-[200px] rotate-[-8deg]"
             initial={{ x: -260 }}
-            animate={{ x: stepValues(-260, 0, STEP4_FRACS) }}
+            animate={isInView ? { x: stepValues(-260, 0, STEP4_FRACS) } : undefined}
             transition={{ duration: 2, ease: EASE, times: STEP4_TIMES }}
           >
             <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-contain" src={imgWhale} />
@@ -81,7 +89,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[70px] top-[-205px] h-[1215px] w-[823px] overflow-hidden"
             initial={{ y: 1050 }}
-            animate={{ y: stepValues(1050, 0, PORTRAIT_FRACS) }}
+            animate={isInView ? { y: stepValues(1050, 0, PORTRAIT_FRACS) } : undefined}
             transition={{ duration: 2, ease: EASE, times: PORTRAIT_TIMES }}
           >
             <img
@@ -96,7 +104,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="pointer-events-none absolute left-[95px] top-[425px] h-[280px] w-[402px] overflow-hidden"
             initial={{ x: -500, y: 240 }}
-            animate={{ x: stepValues(-500, 0, STEP5_FRACS), y: stepValues(240, 0, STEP5_FRACS) }}
+            animate={isInView ? { x: stepValues(-500, 0, STEP5_FRACS), y: stepValues(240, 0, STEP5_FRACS) } : undefined}
             transition={{ duration: 2, ease: EASE, times: STEP5_TIMES }}
           >
             <img
@@ -111,7 +119,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[400px] top-[350px] h-[210px] w-[95px] rotate-[-8deg]"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={isInView ? { opacity: 1 } : undefined}
             transition={{ duration: 2, ease: EASE, delay: 0.45 }}
           >
             <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-contain" src={imgArrow} />
@@ -119,7 +127,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[56px] top-[348px] h-[215px] w-[95px] rotate-[8deg]"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={isInView ? { opacity: 1 } : undefined}
             transition={{ duration: 2, ease: EASE, delay: 0.5 }}
           >
             <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-contain" src={imgArrowLeft} />
@@ -129,7 +137,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[698px] top-0 h-[1024px] w-[36px]"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={isInView ? { opacity: 1 } : undefined}
             transition={{ duration: 2, ease: EASE, delay: 0.25 }}
           >
             <div className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-[#00000022]" />
@@ -146,7 +154,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[712px] top-[-8px] h-[95px] w-[230px] overflow-hidden rotate-[1deg]"
             initial={{ y: -140 }}
-            animate={{ y: stepValues(-140, 0, STEP4_FRACS) }}
+            animate={isInView ? { y: stepValues(-140, 0, STEP4_FRACS) } : undefined}
             transition={{ duration: 2, ease: EASE, times: STEP4_TIMES }}
           >
             <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover" src={imgGridPaper} />
@@ -156,7 +164,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[1020px] top-[32px] h-[140px] w-[140px]"
             initial={{ y: -180 }}
-            animate={{ y: stepValues(-180, 0, STEP4_FRACS) }}
+            animate={isInView ? { y: stepValues(-180, 0, STEP4_FRACS) } : undefined}
             transition={{ duration: 2, ease: EASE, times: STEP4_TIMES }}
           >
             <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-contain" src={imgLogoMask} />
@@ -166,7 +174,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[1200px] top-0 h-[150px] w-[240px] rotate-[-12deg] overflow-hidden"
             initial={{ x: 190, y: -120 }}
-            animate={{ x: stepValues(190, 0, STEP5_FRACS), y: stepValues(-120, 0, STEP5_FRACS) }}
+            animate={isInView ? { x: stepValues(190, 0, STEP5_FRACS), y: stepValues(-120, 0, STEP5_FRACS) } : undefined}
             transition={{ duration: 2, ease: EASE, times: STEP5_TIMES }}
           >
             <img alt="" className="pointer-events-none absolute left-0 top-[-60%] h-[284.67%] w-full max-w-none" src={imgLogoRound} />
@@ -176,14 +184,14 @@ export default function AboutThisGuy() {
           <motion.div
             className="absolute left-[800px] top-[350px] h-[94px] w-[530px] overflow-hidden"
             initial={{ x: 600 }}
-            animate={{ x: stepValues(600, 0, STEP5_FRACS) }}
+            animate={isInView ? { x: stepValues(600, 0, STEP5_FRACS) } : undefined}
             transition={{ duration: 2, ease: EASE, times: STEP5_TIMES }}
           >
             <img alt="" className="pointer-events-none absolute inset-0 size-full max-w-none object-cover" src={imgWideStrip} />
           </motion.div>
           <motion.div
             initial={{ x: 600 }}
-            animate={{ x: stepValues(600, 0, STEP5_FRACS) }}
+            animate={isInView ? { x: stepValues(600, 0, STEP5_FRACS) } : undefined}
             transition={{ duration: 2, ease: EASE, times: STEP5_TIMES }}
           >
             <p className="absolute left-[822px] top-[370px] w-[530px] text-[23px] font-bold leading-[1.5] text-[#222a1f]">
@@ -200,7 +208,7 @@ export default function AboutThisGuy() {
           <motion.div
             className="pointer-events-none absolute left-[1170px] top-[700px] h-[324px] w-[270px] overflow-hidden"
             initial={{ x: 310, y: 260 }}
-            animate={{ x: stepValues(310, 0, STEP5_FRACS), y: stepValues(260, 0, STEP5_FRACS) }}
+            animate={isInView ? { x: stepValues(310, 0, STEP5_FRACS), y: stepValues(260, 0, STEP5_FRACS) } : undefined}
             transition={{ duration: 2, ease: EASE, times: STEP5_TIMES }}
           >
             <img
