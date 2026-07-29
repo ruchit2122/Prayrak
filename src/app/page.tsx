@@ -6,6 +6,7 @@ import HolyCurseSection from "@/components/HolyCurseSection";
 import BlackWarrantSection from "@/components/BlackWarrantSection";
 import KohrraSection from "@/components/KohrraSection";
 import ZiddiGirlsSection from "@/components/ZiddiGirlsSection";
+import SisterhoodSection from "@/components/SisterhoodSection";
 import UpcomingReleasesSection from "@/components/UpcomingReleasesSection";
 import CoFounder from "@/components/CoFounder";
 import ContactSection from "@/components/ContactSection";
@@ -21,8 +22,9 @@ export default function Home() {
       <BlackWarrantSection />
       <KohrraSection />
       <ZiddiGirlsSection />
+      <SisterhoodSection />
       <UpcomingReleasesSection />
-      <CoFounder/>
+      <CoFounder />
       <ContactSection />
     </main>
   );
