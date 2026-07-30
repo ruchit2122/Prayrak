@@ -2,9 +2,20 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Bevan } from "next/font/google";
 import "./globals.css";
 
+// `preload: false` on both faces below is deliberate. The page currently
+// renders no text at all — every section is a video — but next/font defaults
+// to `preload: true`, which injected two `<link rel="preload" as="font">` tags
+// and pulled ~53KB of woff2 over the wire on every visit, competing with the
+// intro video for bandwidth during LCP for glyphs nothing ever painted.
+//
+// The @font-face rules are still emitted, so the moment you add real text
+// these fonts apply as before — they just download when first needed instead
+// of unconditionally. If text becomes part of the initial viewport, flip the
+// face that renders it back to `preload: true`.
 const bricolageGrotesque = Bricolage_Grotesque({
   variable: "--font-bricolage",
   subsets: ["latin"],
+  preload: false,
 });
 
 // "The Pixel Editorial" (used for the title in the Figma file) is a licensed
@@ -15,6 +26,7 @@ const bevan = Bevan({
   variable: "--font-display",
   weight: "400",
   subsets: ["latin"],
+  preload: false,
 });
 
 export const metadata: Metadata = {
