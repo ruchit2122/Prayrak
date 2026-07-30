@@ -10,6 +10,7 @@ import SisterhoodSection from "@/components/SisterhoodSection";
 import UpcomingReleasesSection from "@/components/UpcomingReleasesSection";
 import CoFounder from "@/components/CoFounder";
 import ContactSection from "@/components/ContactSection";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
@@ -26,6 +27,7 @@ export default function Home() {
       <UpcomingReleasesSection />
       <CoFounder />
       <ContactSection />
+      <Footer />
     </main>
   );
 }
