@@ -14,6 +14,15 @@ const EMAIL = "prayrakmehta@gmail.com";
 const PHONE_DISPLAY = "+91 99535 91413";
 const PHONE_DIAL = "+919953591413";
 
+// Studio credit in the bottom bar.
+const STUDIO_NAME = "Logam Digital";
+const STUDIO_DOMAIN = "logamdigital.com";
+
+// VHS — the production house Prayrak co-founded. `vhs.mumbai` is an Instagram
+// handle, not a domain (there is no `.mumbai` TLD), so it resolves through
+// instagram.com like the handle above.
+const VHS_HANDLE = "vhs.mumbai";
+
 function InstagramIcon() {
   return (
     <svg
@@ -154,8 +163,32 @@ export default function Footer() {
           <span className="font-[family-name:var(--font-display)] text-sm normal-case tracking-normal text-[#1a1a1a]">
             Prayrak Mehta
           </span>
-          <span>Actor · Co-founder @ VHS</span>
+          <span>
+            Actor · Co-founder @{" "}
+            <a
+              href={`https://instagram.com/${VHS_HANDLE}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#1a1a1a] underline decoration-[#1a1a1a]/25 decoration-1 underline-offset-4 transition-colors hover:text-[#b3403a] hover:decoration-[#b3403a] focus-visible:text-[#b3403a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b3403a] motion-reduce:transition-none"
+            >
+              VHS
+              <span className="sr-only"> (opens in a new tab)</span>
+            </a>
+          </span>
         </div>
+
+        <p className="mt-4 text-center text-[0.7rem] uppercase tracking-[0.18em] text-[#6b5f4a]">
+          Powered by{" "}
+          <a
+            href={`https://${STUDIO_DOMAIN}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#1a1a1a] underline decoration-[#1a1a1a]/25 decoration-1 underline-offset-4 transition-colors hover:text-[#b3403a] hover:decoration-[#b3403a] focus-visible:text-[#b3403a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b3403a] motion-reduce:transition-none"
+          >
+            {STUDIO_NAME}
+            <span className="sr-only"> (opens in a new tab)</span>
+          </a>
+        </p>
       </div>
     </footer>
   );
