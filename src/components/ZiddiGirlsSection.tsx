@@ -8,6 +8,7 @@ export default function ZiddiGirlsSection() {
       dataName="ziddi girls"
       desktopSrc="/desktop-sections/Ziddi%20girls-D.mp4"
       mobileSrc="/mobile-sections/ziddi%20girls.mp4"
+      enter="right"
     />
   );
 }

@@ -18,9 +18,164 @@ body {
   font-family: var(--font-bricolage), Arial, Helvetica, sans-serif;
 }
 
-/* Sections fade up as they arrive. This lives in CSS rather than a JS
-   animation library because it is one transition repeated eleven times —
-   not worth an animation runtime in the client bundle.
+/* One flick of the wheel or thumb advances exactly one frame.
+   `mandatory` makes the page always come to rest on a frame rather than
+   halfway between two, and `scroll-snap-stop: always` on each section (below)
+   is what forbids a fast fling from skipping past frames — without it, snapping
+   only picks the nearest stop to wherever the momentum ran out, which on a
+   trackpad is three or four sections down.
+
+   The snap container has to be the element that actually scrolls. That is the
+   viewport, so the property goes on `html`; on `body` it would silently do
+   nothing. */
+html {
+  scroll-snap-type: y mandatory;
+  /* Glides to the next frame instead of jumping to it. This governs scrolls the
+     page performs itself — the keyboard's PageDown/Space/arrows, `#anchor`
+     links, and `scrollIntoView` — which is exactly the set that would otherwise
+     teleport a whole frame in a single paint and read as a cut.
+
+     It deliberately does not touch the wheel or a thumb-swipe: those are
+     already continuous, and the eased settle onto the snap point at the end of
+     one is the browser's own snap animation, not this. */
+  scroll-behavior: smooth;
+}
+
+/* Snapping and smooth scrolling are both motion the user did not ask for, and
+   `prefers-reduced-motion` is how they say so. Without the snap type the page
+   scrolls freely and every frame is still reachable — it just no longer moves
+   on its own, and a keypress lands instantly instead of gliding. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-snap-type: none;
+    scroll-behavior: auto;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Frames.
+
+   Every section is a fixed-size frame exported from Figma — 760x1352 on mobile,
+   1440x1024 on desktop — and one frame is one screen.
+
+   Three things cannot hold at once when the frame's proportions and the
+   window's differ: full width (no bars down the sides), full height (nothing
+   below the fold), and the frame's own proportions (nothing trimmed). A
+   1440x1024 frame is 1.41 wide-to-tall; a laptop window is nearer 1.97. Bars
+   and overflow were both rejected, so the frame fills the window and the
+   overhanging edges are trimmed — `cover`, below.
+
+   The real fix is upstream, not here: re-export the frames at the proportions
+   they are actually viewed at (1920x1080 for desktop, 1170x2532 for phones) and
+   every one of the three holds at once, because there is nothing left to
+   reconcile. --------------------------------------------------------------- */
+
+/* One frame, one screen: fixing the section to the viewport is what makes a
+   scroll land on a whole composition rather than the seam between two.
+
+   `svh` is the *small* viewport height, i.e. with mobile browser chrome
+   expanded. `dvh` would resize every frame mid-scroll as the address bar hides,
+   and `vh` would push the bottom of each frame under it. The plain `vh` line
+   before the `svh` one is the fallback for browsers without the newer units,
+   not a duplicate. */
+.frame-section {
+  height: 100vh;
+  height: 100svh;
+
+  /* Frames stack instead of queueing. Each one pins to the top of the window
+     once it gets there and stays pinned while the next frame rises over it, so
+     a scroll deals one frame onto the one before rather than pushing it off the
+     top. Nothing moves that the scroll does not move — the pinning is what the
+     browser does with `sticky`, so there is no scroll listener and no rAF loop.
+
+     Two things make it work, both easy to undo by accident:
+     - every section is a child of the same `<main>`, which is what each one
+       sticks *within*. Wrapping any section in a div of its own would give it a
+       containing block exactly its own height, leaving it nothing to stick to,
+       and that section alone would silently go back to scrolling away.
+     - the cover is pure paint order. Positioned elements paint in document
+       order, so a later frame covers an earlier one for free. No z-index —
+       adding one to any section would fix its place in the stack and let an
+       older frame sit on top of a newer one. */
+  position: sticky;
+  top: 0;
+}
+
+/* The snap points deliberately do NOT live on the sections.
+   A sticky element's snap area moves with the element, so once a frame pins to
+   the top of the window its snap area sits at whatever the current scroll
+   offset is — permanently "already snapped". Mandatory snapping then resolves
+   every scroll, in either direction, back to where it started, and the page
+   locks solid: nothing scrolls up, and before long nothing scrolls down either.
+   That is not a tuning problem, it is what sticky and snap do to each other.
+
+   So each frame's snap point is a zero-height marker that is *not* sticky,
+   sitting in normal flow immediately before its section and therefore at
+   exactly that section's resting offset. It never moves, so the snap positions
+   stay a fixed ladder at one screen apart and scrolling works in both
+   directions, while the sections above are free to pin and stack. */
+.frame-snap {
+  height: 0;
+  scroll-snap-align: start;
+  /* See `html` above: `always` is what forbids one flick from skipping frames. */
+  scroll-snap-stop: always;
+}
+
+/* Frames entering from the left or right was tried here and removed. Recording
+   why, so it is not attempted again the same way:
+
+   A sideways entry has to be driven by the scroll rather than by a timer, or it
+   drifts out of step with a fast flick and ignores the scroll entirely on the
+   way back up. The CSS way to do that is `animation-timeline: view()` — and a
+   view timeline measures where its subject sits inside the scrollport, which
+   for a `position: sticky` element that has pinned to the top of the window
+   stops changing. The timeline freezes, the animation holds its first keyframe,
+   and the frame parks off-screen for good. Measured, not guessed: the identical
+   rule animates correctly the moment the section is made `position: static`.
+
+   Hanging the timeline on the static snap marker instead and referencing it by
+   name from the section does not work either — a named timeline does not
+   resolve from a sibling without `timeline-scope`, and every marker would need
+   a distinct name for twelve distinct timelines.
+
+   So: sticky stacking and CSS-driven side entry cannot both be had. Keeping the
+   stack. A side entry would need the horizontal offset written from a scroll
+   handler in JS, which is a real option — it is about twenty lines and works in
+   every browser — but it is a scroll listener on a page that currently has
+   none. ---------------------------------------------------------------- */
+
+/* `cover` — the frame fills the window, and the small overhang is cropped.
+
+   This was `contain` while the exports were 1440x1024 (1.41 wide-to-tall) in a
+   window nearer 1.97. Nothing could fill that gap honestly: `cover` cut ~29% of
+   the height, which took the LinkedIn and Instagram marks clean off the
+   co-founder frame and sliced the top off the title; `fill` stretched faces
+   ~30% wide. So `contain` stood, and the cost was black bars down each side.
+
+   The 16:9 re-exports have since landed — the `-D` files are 1920x1078, or
+   1.781. In a 1470x801 window that is a ~3% trim rather than 29%, which is the
+   condition this rule was always waiting on, so the bars are gone and the frame
+   spans the full width. The edges of these frames carry content, so if a future
+   export drifts back off 16:9, check what `cover` is eating before leaving it. */
+.frame-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Sections fade as they arrive. This lives in CSS rather than a JS animation
+   library because it is one transition repeated eleven times — not worth an
+   animation runtime in the client bundle.
+
+   The 24px `translateY` that used to be here is gone, and the fade is down from
+   450ms to 180ms, because the stack above now does this job. A frame already
+   rises over the one before it under the scroll, so lifting it a further 24px
+   was one movement too many — and every millisecond a frame spends below full
+   opacity is a millisecond you see the previous frame *through* it, which on
+   two full-bleed videos reads as a dissolve rather than as a card being dealt.
+   Short enough to take the edge off the first frame appearing, short enough not
+   to smear two frames together.
 
    Deliberately no `will-change`: promoting eleven layers up front and holding
    them for the life of the page costs more during scrolling than it saves.
@@ -28,20 +183,15 @@ body {
    and releases it afterwards, which is what we actually want. */
 .reveal {
   opacity: 0;
-  transform: translateY(24px);
-  transition:
-    opacity 450ms ease-out,
-    transform 450ms ease-out;
+  transition: opacity 180ms ease-out;
 }
 
 .reveal[data-revealed="true"] {
   opacity: 1;
-  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .reveal {
-    transform: none;
     transition: none;
   }
 }
@@ -50,25 +200,71 @@ body {
    Footer — paper collage.
 
    The contact video ends on cream notepaper, so the footer continues that
-   surface rather than introducing a new one. Every texture below is drawn with
-   gradients instead of an image: the whole point of the work above was to stop
-   shipping bytes nobody sees, and a paper texture PNG would have undone a
-   chunk of it. --------------------------------------------------------- */
+   surface rather than introducing a new one. It used to approximate that paper
+   with a stack of CSS gradients, to avoid shipping an image for it. It now uses
+   the real texture from the design instead — the same asset the frames are
+   made from, which is the only way the seam between the last frame and the
+   footer genuinely disappears. Worth its 642KB precisely because it is the one
+   image on the page that is the design rather than a decoration of it.
+
+   #e6d3ba is not a guess: it is the mean of every fully-opaque pixel in
+   paper-texture.webp, so the flat fill under the texture and the texture itself
+   are the same paper, and the join between them cannot be seen. The old
+   hand-picked #e6d9b8 was within a few points of it, which is why the drawn
+   version looked close but never quite sat right. ---------------------- */
 .paper-footer {
-  /* Sampled from the final frame of contact.mp4. */
-  background-color: #e6d9b8;
-  background-image:
-    /* Ruled lines, like the notepad in the video. */
-    repeating-linear-gradient(
-      to bottom,
-      transparent 0 31px,
-      rgba(90, 110, 150, 0.13) 31px 32px
-    ),
-    /* Uneven warmth so the paper does not read as flat colour. */
-      radial-gradient(120% 80% at 12% 0%, rgba(255, 252, 240, 0.75), transparent 60%),
-    radial-gradient(90% 70% at 92% 12%, rgba(214, 176, 150, 0.3), transparent 55%),
-    radial-gradient(70% 60% at 70% 100%, rgba(150, 130, 95, 0.22), transparent 60%);
+  /* A screen of its own. The frames above are sticky, so the last one stays
+     pinned to the top of the window for as long as anything is left to scroll —
+     and a footer shorter than the window would come to rest in the lower part
+     of the screen with that pinned frame still showing above it, reading as a
+     frame and a footer sharing one screen. At a full screen tall the footer
+     covers the frame outright, so the page ends on paper and nothing else. */
+  min-height: 100vh;
+  min-height: 100svh;
+  /* The content block is a few hundred pixels tall inside that full screen;
+     centring it keeps the page from ending on a heap of blank paper. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* The footer is a snap stop like the frames above it, so the last flick of
+     the wheel lands on the contact details squarely instead of leaving them
+     half off the bottom. Unlike the frames it can carry the snap point itself:
+     it is not sticky, so its snap area stays where the layout puts it. */
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  /* The mean colour of the texture's opaque paper, so the fill and the image
+     are the same sheet. */
+  background-color: #e6d3ba;
+
+  /* The torn-paper texture across the top, flat paper of the same colour below
+     it. `100% auto` keeps the tear spanning the full width at its true
+     proportions at any window size, and `no-repeat` stops it tiling down the
+     page — the flat colour handles the rest, invisibly, because it is that
+     texture's own average.
+
+     A second, flipped copy along the bottom edge was tried and dropped: the
+     texture stands ~450px tall at this width, so in an ~800px footer the two
+     copies overlap through the middle and double the grain exactly where the
+     contact details sit. The warmth gradients stay for that middle stretch, so
+     it reads as paper rather than as a flat panel below a textured strip. */
+  background-image: url("/footer/paper-texture.webp"),
+    radial-gradient(120% 80% at 12% 0%, rgba(255, 252, 240, 0.55), transparent 60%),
+    radial-gradient(90% 70% at 92% 12%, rgba(214, 176, 150, 0.25), transparent 55%),
+    radial-gradient(70% 60% at 70% 100%, rgba(150, 130, 95, 0.2), transparent 60%);
+  background-position:
+    top center,
+    center,
+    center,
+    center;
+  background-size:
+    100% auto,
+    auto,
+    auto,
+    auto;
+  background-repeat: no-repeat;
 }
+
 
 /* Torn top edge, so the footer looks lifted onto the page rather than butted
    against the video. A mask keeps it a real transparent tear — a solid shape
@@ -107,20 +303,184 @@ body {
   );
 }
 
-/* Each contact detail sits on its own torn chit of paper. */
+/* Each contact detail sits on a ticket stub — the real one from the design
+   (public/footer/ticket.webp), not a shape drawn here. The box is given the
+   ticket's own 358:179 proportions and the image is stretched to exactly 100%
+   100% of it, which sounds like distortion and is the opposite: because the box
+   and the image are the same shape, `100% 100%` lands pixel-for-pixel, and the
+   notches and scalloped edges keep the weight the designer drew. Sizing the box
+   any other way is what would bend them.
+
+   No `clip-path` any more. The ticket's own alpha is the silhouette, so the
+   hand-written deckle polygon that used to approximate one is gone. */
 .paper-chit {
-  background-color: #f2ead4;
-  border-radius: 2px;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.6) inset,
-    0 6px 14px -8px rgba(60, 45, 20, 0.55);
-  /* Deckle edge on all four sides, so the chits read as torn rather than cut. */
-  clip-path: polygon(
-    0% 2%, 4% 0%, 12% 1.5%, 23% 0.4%, 35% 2%, 47% 0.6%, 61% 1.8%, 74% 0.3%,
-    86% 1.6%, 96% 0.5%, 100% 2.5%,
-    99% 14%, 100% 30%, 98.6% 48%, 100% 64%, 99% 80%, 100% 96%,
-    95% 99%, 84% 97.6%, 71% 99.4%, 58% 98%, 45% 99.6%, 31% 98.2%, 18% 99.5%,
-    6% 98%, 0% 96%,
-    1.4% 80%, 0% 63%, 1.2% 46%, 0% 29%, 1% 15%
-  );
+  /* No `aspect-ratio` here on purpose: it lives on the list item, and this
+     fills that absolutely. A flex container's automatic minimum size lets its
+     content override an aspect-ratio and push the box taller, so with the ratio
+     on this element a long enough email could stretch the ticket. Sizing from
+     the item instead puts the shape beyond the text's reach entirely. */
+  background: url("/footer/ticket.webp") center / 100% 100% no-repeat;
+  /* The ticket art carries its own outline and shadow, so the only thing left
+     to add is the lift off the page. Sits on a filter rather than box-shadow:
+     a box-shadow would draw the rectangle of the element, not the ticket's
+     notched outline, and the corners would show as square ghosts. */
+  filter: drop-shadow(0 6px 10px rgba(60, 45, 20, 0.45));
+}
+
+/* ---------------------------------------------------------------------------
+   Stop-motion, for the footer collage.
+
+   The videos above are animated a frame at a time, so anything that eases
+   smoothly down here reads as a different piece of software rather than the
+   same hand. Two separate animations do that, and they are deliberately not
+   the same length: 1.1s against 1.7s never lines up, so the pair does not fall
+   into a visible loop the way a single timeline would.
+
+   `steps(1, end)` is what makes it stop-motion rather than animation. It holds
+   each pose for its whole slice and then jumps, which is the shot-on-twos look
+   the sections use. An eased transform between the same keyframes would glide,
+   and gliding is the one thing this must not do.
+
+   Sizes are in percent, not pixels, because the ticket scales with the grid —
+   a 0.35% nudge stays a nudge at every width, where 2px would be a lurch on a
+   phone and invisible on a desktop. */
+@keyframes chit-weave {
+  /* The tilt is the ticket's own resting angle, passed in per ticket as
+     `--chit-tilt`. It has to be re-stated in every keyframe: an animation on
+     `transform` replaces the whole property, so leaving it out of one frame
+     would snap that ticket square for the length of that frame. */
+  0%   { transform: rotate(var(--chit-tilt)) translate3d(0, 0, 0); }
+  20%  { transform: rotate(calc(var(--chit-tilt) + 0.28deg)) translate3d(0.34%, -0.45%, 0); }
+  40%  { transform: rotate(calc(var(--chit-tilt) - 0.22deg)) translate3d(-0.3%, 0.32%, 0); }
+  60%  { transform: rotate(calc(var(--chit-tilt) + 0.14deg)) translate3d(0.16%, 0.46%, 0); }
+  80%  { transform: rotate(calc(var(--chit-tilt) - 0.3deg)) translate3d(-0.22%, -0.26%, 0); }
+}
+
+/* The gate flicker. `filter` is replaced wholesale by an animation just as
+   `transform` is, so the drop-shadow that lifts the ticket off the page is
+   repeated in every keyframe — drop it from one and the ticket visibly
+   un-sticks for that slice. Brightness swings stay inside ±6%: this is meant
+   to feel like uneven light through a projector, not a fault. */
+@keyframes chit-flicker {
+  0%, 100% { filter: drop-shadow(0 6px 10px rgba(60, 45, 20, 0.45)) brightness(1); }
+  28%      { filter: drop-shadow(0 6px 10px rgba(60, 45, 20, 0.45)) brightness(1.055); }
+  46%      { filter: drop-shadow(0 6px 10px rgba(60, 45, 20, 0.45)) brightness(0.955); }
+  62%      { filter: drop-shadow(0 6px 10px rgba(60, 45, 20, 0.45)) brightness(1.025); }
+  81%      { filter: drop-shadow(0 6px 10px rgba(60, 45, 20, 0.45)) brightness(0.978); }
+}
+
+.chit-weave {
+  animation: chit-weave 1.1s steps(1, end) infinite;
+  /* Staggered per ticket, so the three read as three objects on a table rather
+     than one sheet moving. Negative, so every ticket is already mid-cycle on
+     the first frame instead of the row starting in lockstep. */
+  animation-delay: var(--chit-delay, 0s);
+}
+
+.paper-chit {
+  animation: chit-flicker 1.7s steps(1, end) infinite;
+  animation-delay: var(--chit-delay, 0s);
+}
+
+/* A jitter that cannot be stopped is a problem for vestibular disorders, and
+   this one is decorative in full. Both animations are dropped outright rather
+   than slowed — the ticket keeps its resting tilt and its shadow, and simply
+   holds still. */
+@media (prefers-reduced-motion: reduce) {
+  .chit-weave {
+    animation: none;
+    transform: rotate(var(--chit-tilt));
+  }
+  .paper-chit {
+    animation: none;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   The soundtrack cue card.
+
+   Cut from the same stock as the footer tickets so it reads as one more thing
+   laid on the page rather than as browser furniture: cream paper, a hairline
+   ink edge, and the same lift the tickets get. The tilt is small — this one is
+   fixed to the viewport over moving film, and any more than a degree reads as a
+   mistake rather than as a hand. */
+.paper-cue {
+  background-color: #efe7d6;
+  /* The grain, so it is paper and not a beige rectangle. Two offset dot grids
+     at very low contrast: cheap, and it survives being scaled. */
+  background-image:
+    radial-gradient(rgba(60, 45, 20, 0.055) 1px, transparent 1px),
+    radial-gradient(rgba(60, 45, 20, 0.04) 1px, transparent 1px);
+  background-size: 7px 7px, 11px 11px;
+  background-position: 0 0, 3px 4px;
+  border: 1px solid rgba(26, 26, 26, 0.35);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  transform: rotate(-0.8deg);
+}
+
+/* No hover state. The card is a label, not a control — nothing here responds to
+   a press, so anything that lifts under the cursor is claiming otherwise. */
+
+/* Level bars. `steps(1, end)` again — the same shot-on-twos jump the frames and
+   the tickets use, so the meter belongs to the same hand. Eased bars would be a
+   media player; stepped ones are a mechanical VU needle. */
+.cue-bar {
+  width: 2px;
+  height: 22%;
+  background-color: #6b5f4a;
+  transition: height 200ms ease-out;
+}
+
+[data-playing="true"] .cue-bar {
+  animation: cue-level 0.72s steps(1, end) infinite;
+  background-color: #b3403a;
+}
+
+/* Each bar is offset into the cycle so the four never move as a block. */
+[data-playing="true"] .cue-bar:nth-child(1) { animation-delay: -0.06s; }
+[data-playing="true"] .cue-bar:nth-child(2) { animation-delay: -0.33s; }
+[data-playing="true"] .cue-bar:nth-child(3) { animation-delay: -0.5s; }
+[data-playing="true"] .cue-bar:nth-child(4) { animation-delay: -0.19s; }
+
+@keyframes cue-level {
+  0%   { height: 30%; }
+  20%  { height: 85%; }
+  40%  { height: 45%; }
+  60%  { height: 100%; }
+  80%  { height: 55%; }
+}
+
+/* The meter is decoration and the sound is audible regardless, so it simply
+   holds at rest rather than being slowed. */
+@media (prefers-reduced-motion: reduce) {
+  [data-playing="true"] .cue-bar {
+    animation: none;
+    height: 55%;
+  }
+}
+
+/* The entry card's arrival. Stepped, like everything else that moves here — it
+   snaps through three poses rather than easing, so the card lands the way a
+   frame does instead of sliding in like a cookie banner. The delay lets the
+   intro frame register first; popping over a black screen would read as an
+   interstitial rather than as part of the film. */
+@keyframes entry-pop {
+  0%   { opacity: 0; transform: rotate(-1.4deg) scale(0.92); }
+  45%  { opacity: 1; transform: rotate(-1.4deg) scale(1.035); }
+  100% { opacity: 1; transform: rotate(-1.4deg) scale(1); }
+}
+
+.entry-pop {
+  animation: entry-pop 380ms steps(1, end) 450ms both;
+}
+
+/* The card is the one thing on the page a reader may need to answer before
+   anything else happens, so it arrives even when motion is unwelcome — it just
+   arrives without the snap. */
+@media (prefers-reduced-motion: reduce) {
+  .entry-pop {
+    animation: none;
+    transform: rotate(-1.4deg);
+  }
 }

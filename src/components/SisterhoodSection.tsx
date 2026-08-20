@@ -8,6 +8,7 @@ export default function SisterhoodSection() {
       dataName="sisterhood"
       desktopSrc="/desktop-sections/sisterhood-D.mp4"
       mobileSrc="/mobile-sections/sisterhood.mp4"
+      enter="left"
     />
   );
 }

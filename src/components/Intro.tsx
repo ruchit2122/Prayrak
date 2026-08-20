@@ -12,25 +12,35 @@ export default function Intro() {
   const src =
     isDesktop === null ? undefined : isDesktop ? "/desktop-sections/Intro-D.mp4" : "/mobile-sections/start.mp4";
 
+  // Unlike the sections below, this poster is not gated on anything: it is the
+  // first thing on the page, it is ~40KB against a ~2MB clip, and it decides
+  // whether the first paint is the opening frame or a black rectangle.
+  const poster = src?.replace(/\.mp4$/, ".webp");
+
   useEffect(() => {
     if (!src) return;
     videoRef.current?.play().catch(() => {});
   }, [src]);
 
   return (
-    <section className="relative w-full overflow-hidden bg-black">
-      <div className="relative" data-name="intro">
-        <video
-          ref={videoRef}
-          className="block w-full h-auto"
-          src={src}
-          preload="auto"
-          onLoadedMetadata={(e) => (e.currentTarget.playbackRate = 0.5)}
-          autoPlay
-          muted
-          playsInline
-        />
-      </div>
-    </section>
+    <>
+      {/* See `.frame-snap` in globals.css: snap points sit on static markers,
+          never on the sticky sections themselves. */}
+      <div className="frame-snap" aria-hidden="true" />
+      <section className="frame-section relative w-full overflow-hidden bg-black">
+        <div className="relative h-full w-full" data-name="intro">
+          <video
+            ref={videoRef}
+            className="frame-video"
+            src={src}
+            poster={poster}
+            preload="auto"
+            autoPlay
+            muted
+            playsInline
+          />
+        </div>
+      </section>
+    </>
   );
 }
