@@ -10,7 +10,7 @@ export default function Intro() {
   const isDesktop = useIsDesktop();
 
   const src =
-    isDesktop === null ? undefined : isDesktop ? "/desktop-sections/intro.mp4" : "/mobile-sections/start.mp4";
+    isDesktop === null ? undefined : isDesktop ? "/desktop-sections/Intro-D.mp4" : "/mobile-sections/start.mp4";
 
   useEffect(() => {
     if (!src) return;
@@ -21,19 +21,9 @@ export default function Intro() {
     <section className="relative w-full overflow-hidden bg-black">
       <div className="relative" data-name="intro">
         <video
-          ref={desktopVideoRef}
-          className="hidden w-full h-auto md:block"
-          src="/desktop-sections/Intro-D.mp4"
-          preload="auto"
-          onLoadedMetadata={(e) => (e.currentTarget.playbackRate = 0.5)}
-          autoPlay
-          muted
-          playsInline
-        />
-        <video
-          ref={mobileVideoRef}
-          className="block w-full h-auto md:hidden"
-          src="/mobile-sections/start.mp4"
+          ref={videoRef}
+          className="block w-full h-auto"
+          src={src}
           preload="auto"
           onLoadedMetadata={(e) => (e.currentTarget.playbackRate = 0.5)}
           autoPlay

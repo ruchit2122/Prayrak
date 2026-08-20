@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 
 type SectionVideoProps = {
@@ -15,18 +16,16 @@ type SectionVideoProps = {
 // near the viewport, so the browser never fetches bytes for off-screen
 // sections. Each video plays once, muted, the moment it's ready.
 export default function SectionVideo({ dataName, desktopSrc, mobileSrc, rate = 0.5 }: SectionVideoProps) {
-  const desktopRef = useRef<HTMLVideoElement>(null);
-  const mobileRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
+  const isDesktop = useIsDesktop();
 
   useEffect(() => {
-    if (!shouldLoad) return;
-    for (const v of [desktopRef.current, mobileRef.current]) {
-      if (!v) continue;
-      v.playbackRate = rate;
-      v.play();
-    }
-  }, [shouldLoad, rate]);
+    const v = videoRef.current;
+    if (!shouldLoad || !v) return;
+    v.playbackRate = rate;
+    v.play();
+  }, [shouldLoad, rate, isDesktop]);
 
   return (
     <section className="relative w-full overflow-hidden bg-black">
@@ -36,19 +35,23 @@ export default function SectionVideo({ dataName, desktopSrc, mobileSrc, rate = 0
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
         onViewportEnter={() => setShouldLoad(true)}
-        viewport={{ once: true, amount: 0.2, margin: "200px 0px" }}
+        viewport={{ once: true, amount: 0.4 }}
         transition={{ duration: 1.2, delay: 0.25, ease: "easeOut" }}
       >
-        <video
-          ref={desktopRef}
-          className="hidden w-full h-auto md:block"
-          style={{ aspectRatio: "1920 / 1078" }}
-          src={shouldLoad ? desktopSrc : undefined}
-          preload="none"
-          muted
-          playsInline
-        />
-      </div>
+        {/* isDesktop is null until the client knows the viewport: render
+            nothing rather than fetch the variant that would be hidden. */}
+        {isDesktop !== null && (
+          <video
+            ref={videoRef}
+            className="block w-full h-auto"
+            style={{ aspectRatio: isDesktop ? "1920 / 1078" : "760 / 1352" }}
+            src={shouldLoad ? (isDesktop ? desktopSrc : mobileSrc) : undefined}
+            preload="none"
+            muted
+            playsInline
+          />
+        )}
+      </motion.div>
     </section>
   );
 }
