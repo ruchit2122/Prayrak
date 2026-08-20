@@ -52,6 +52,35 @@ html {
   }
 }
 
+/* Touch gets `proximity`, not `mandatory`. This is not a preference — mandatory
+   snapping is unusable on a phone, and the reason is specific.
+ 
+   The frames are sized in `svh`, deliberately, so they do not resize as the
+   address bar hides. But the *scrollport* is not svh: `innerHeight` grows by
+   the height of that bar the moment it goes. So mid-swipe the window becomes
+   taller than a frame, every snap position stops being one scrollport apart,
+   and the last one goes out of reach entirely — measured on this page at a
+   simulated 801px viewport over 700px frames, the footer's snap point sits at
+   8400 against a maximum scroll of 8299.
+ 
+   `mandatory` means the browser must come to rest on a snap position. Handed a
+   set that no longer lines up with the scrollport, and re-resolving mid-fling
+   because the bar just moved, it picks one that is nowhere near the swipe —
+   which is how one flick from the first frame ends up at the footer. The same
+   thing reproduces backwards: resizing during a smooth scroll to frame 1 landed
+   back at 0.
+ 
+   `proximity` removes the compulsion. The browser still settles onto a frame
+   when a swipe ends near one, so the reel still reads as a reel, but it is
+   allowed to leave the scroll where the reader put it instead of resolving to
+   an answer that is wrong. Desktop keeps `mandatory`: there is no address bar
+   there, so the scrollport is stable and the premise never breaks. */
+@media (pointer: coarse) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+}
+
 /* ---------------------------------------------------------------------------
    Frames.
 
@@ -221,6 +250,14 @@ html {
      covers the frame outright, so the page ends on paper and nothing else. */
   min-height: 100vh;
   min-height: 100svh;
+  /* `dvh` last, and only here. Every frame above is `svh` so it will not resize
+     mid-scroll, but the footer is the one element that has to cover whatever
+     the window currently is: at `svh` it comes up short by the height of a
+     hidden address bar, which both leaves a strip of the last frame showing
+     underneath and — because its snap point then sits past the end of the
+     scrollable range — makes that snap position unreachable. It is last in the
+     document, so there is no frame after it for a resize to disturb. */
+  min-height: 100dvh;
   /* The content block is a few hundred pixels tall inside that full screen;
      centring it keeps the page from ending on a heap of blank paper. */
   display: flex;
