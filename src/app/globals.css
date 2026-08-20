@@ -17,3 +17,110 @@ body {
   color: var(--foreground);
   font-family: var(--font-bricolage), Arial, Helvetica, sans-serif;
 }
+
+/* Sections fade up as they arrive. This lives in CSS rather than a JS
+   animation library because it is one transition repeated eleven times —
+   not worth an animation runtime in the client bundle.
+
+   Deliberately no `will-change`: promoting eleven layers up front and holding
+   them for the life of the page costs more during scrolling than it saves.
+   The browser promotes each element for the duration of its own transition
+   and releases it afterwards, which is what we actually want. */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 450ms ease-out,
+    transform 450ms ease-out;
+}
+
+.reveal[data-revealed="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Footer — paper collage.
+
+   The contact video ends on cream notepaper, so the footer continues that
+   surface rather than introducing a new one. Every texture below is drawn with
+   gradients instead of an image: the whole point of the work above was to stop
+   shipping bytes nobody sees, and a paper texture PNG would have undone a
+   chunk of it. --------------------------------------------------------- */
+.paper-footer {
+  /* Sampled from the final frame of contact.mp4. */
+  background-color: #e6d9b8;
+  background-image:
+    /* Ruled lines, like the notepad in the video. */
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 31px,
+      rgba(90, 110, 150, 0.13) 31px 32px
+    ),
+    /* Uneven warmth so the paper does not read as flat colour. */
+      radial-gradient(120% 80% at 12% 0%, rgba(255, 252, 240, 0.75), transparent 60%),
+    radial-gradient(90% 70% at 92% 12%, rgba(214, 176, 150, 0.3), transparent 55%),
+    radial-gradient(70% 60% at 70% 100%, rgba(150, 130, 95, 0.22), transparent 60%);
+}
+
+/* Torn top edge, so the footer looks lifted onto the page rather than butted
+   against the video. A mask keeps it a real transparent tear — a solid shape
+   in the paper colour would show a seam against the frame above. */
+.paper-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 14px;
+  background: inherit;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='14' preserveAspectRatio='none'%3E%3Cpath d='M0 14V5.2l7-1.6 6.5 2.4 8-3.4 7.4 1.2 6-2.6 8.6 3 7-2.2 6.4 1.8 8.8-3.2 6.2 2.4 7.6-1.4 6.8 2.8 8-3 7.2 1.6 6.6-2.4 8.4 2.8 6.4-1.8 7.8 2.2 6.2-2.8 8.6 3.2 7-1.2 6.4 2.4 8.2-3 6.6 1.8 7.4-2.2 6.8 2.6 8-1.4 6.2 2.2 7.6-2.8 6.4 1.6 8.8 2.4 7-3 6.6 1.4V14z' fill='%23000'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='14' preserveAspectRatio='none'%3E%3Cpath d='M0 14V5.2l7-1.6 6.5 2.4 8-3.4 7.4 1.2 6-2.6 8.6 3 7-2.2 6.4 1.8 8.8-3.2 6.2 2.4 7.6-1.4 6.8 2.8 8-3 7.2 1.6 6.6-2.4 8.4 2.8 6.4-1.8 7.8 2.2 6.2-2.8 8.6 3.2 7-1.2 6.4 2.4 8.2-3 6.6 1.8 7.4-2.2 6.8 2.6 8-1.4 6.2 2.2 7.6-2.8 6.4 1.6 8.8 2.4 7-3 6.6 1.4V14z' fill='%23000'/%3E%3C/svg%3E");
+  -webkit-mask-size: 240px 14px;
+  mask-size: 240px 14px;
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  transform: translateY(-13px);
+  pointer-events: none;
+}
+
+/* Masking tape. Torn ends rather than scissor-cut ones — everything else on
+   this page is ripped by hand, and a clean rectangle was the one element that
+   gave the collage away. The soft vertical banding is the sheen along the
+   tape's length. */
+.tape {
+  clip-path: polygon(
+    3% 0%, 97% 4%, 100% 22%, 98% 50%, 100% 78%, 96% 100%,
+    4% 96%, 0% 74%, 2% 50%, 0% 26%
+  );
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0) 38%,
+    rgba(0, 0, 0, 0.08) 72%,
+    rgba(255, 255, 255, 0.14)
+  );
+}
+
+/* Each contact detail sits on its own torn chit of paper. */
+.paper-chit {
+  background-color: #f2ead4;
+  border-radius: 2px;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.6) inset,
+    0 6px 14px -8px rgba(60, 45, 20, 0.55);
+  /* Deckle edge on all four sides, so the chits read as torn rather than cut. */
+  clip-path: polygon(
+    0% 2%, 4% 0%, 12% 1.5%, 23% 0.4%, 35% 2%, 47% 0.6%, 61% 1.8%, 74% 0.3%,
+    86% 1.6%, 96% 0.5%, 100% 2.5%,
+    99% 14%, 100% 30%, 98.6% 48%, 100% 64%, 99% 80%, 100% 96%,
+    95% 99%, 84% 97.6%, 71% 99.4%, 58% 98%, 45% 99.6%, 31% 98.2%, 18% 99.5%,
+    6% 98%, 0% 96%,
+    1.4% 80%, 0% 63%, 1.2% 46%, 0% 29%, 1% 15%
+  );
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { useIsDesktop } from "@/lib/useIsDesktop";
 
 type SectionVideoProps = {
   dataName: string;
@@ -19,9 +19,6 @@ export default function SectionVideo({ dataName, desktopSrc, mobileSrc, rate = 0
   const mobileRef = useRef<HTMLVideoElement>(null);
   const [shouldLoad, setShouldLoad] = useState(false);
 
-  // preload="none" means nothing buffers until playback is explicitly
-  // requested, so we call play() directly here rather than waiting on
-  // onCanPlay (which would otherwise never fire).
   useEffect(() => {
     if (!shouldLoad) return;
     for (const v of [desktopRef.current, mobileRef.current]) {
@@ -51,16 +48,7 @@ export default function SectionVideo({ dataName, desktopSrc, mobileSrc, rate = 0
           muted
           playsInline
         />
-        <video
-          ref={mobileRef}
-          className="block w-full h-auto md:hidden"
-          style={{ aspectRatio: "760 / 1352" }}
-          src={shouldLoad ? mobileSrc : undefined}
-          preload="none"
-          muted
-          playsInline
-        />
-      </motion.div>
+      </div>
     </section>
   );
 }
