@@ -12,8 +12,9 @@ export default function Intro() {
         <video
           ref={desktopVideoRef}
           className="hidden w-full h-auto md:block"
-          src="/desktop-sections/intro.mp4"
+          src="/desktop-sections/Intro-D.mp4"
           preload="auto"
+          onLoadedMetadata={(e) => (e.currentTarget.playbackRate = 0.5)}
           autoPlay
           muted
           playsInline
@@ -23,6 +24,7 @@ export default function Intro() {
           className="block w-full h-auto md:hidden"
           src="/mobile-sections/start.mp4"
           preload="auto"
+          onLoadedMetadata={(e) => (e.currentTarget.playbackRate = 0.5)}
           autoPlay
           muted
           playsInline

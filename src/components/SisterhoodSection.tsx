@@ -6,7 +6,7 @@ export default function SisterhoodSection() {
   return (
     <SectionVideo
       dataName="sisterhood"
-      desktopSrc="/desktop-sections/sisterhood.mp4"
+      desktopSrc="/desktop-sections/sisterhood-D.mp4"
       mobileSrc="/mobile-sections/sisterhood.mp4"
     />
   );

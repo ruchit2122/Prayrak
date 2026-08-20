@@ -6,7 +6,7 @@ export default function AboutThisGuy() {
   return (
     <SectionVideo
       dataName="about this guy"
-      desktopSrc="/desktop-sections/about%20this%20guy.mp4"
+      desktopSrc="/desktop-sections/about%20this%20guy-D.mp4"
       mobileSrc="/mobile-sections/about%20this%20guy.mp4"
     />
   );
