@@ -24,7 +24,7 @@ export default function Home() {
     <main className="overflow-x-clip">
       <Intro />
       <AboutThisGuy />
-      <WorkSection />
+      {/* <WorkSection /> */}
       <ShadowsSection />
       <HolyCurseSection />
       <BlackWarrantSection />
