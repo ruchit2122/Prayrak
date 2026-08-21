@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated media (see scripts/hash-media.mjs) — sources live in /media
+/public/frames/

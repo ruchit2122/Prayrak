@@ -52,34 +52,33 @@ html {
   }
 }
 
-/* Touch gets `proximity`, not `mandatory`. This is not a preference — mandatory
-   snapping is unusable on a phone, and the reason is specific.
- 
-   The frames are sized in `svh`, deliberately, so they do not resize as the
-   address bar hides. But the *scrollport* is not svh: `innerHeight` grows by
-   the height of that bar the moment it goes. So mid-swipe the window becomes
-   taller than a frame, every snap position stops being one scrollport apart,
-   and the last one goes out of reach entirely — measured on this page at a
-   simulated 801px viewport over 700px frames, the footer's snap point sits at
-   8400 against a maximum scroll of 8299.
- 
-   `mandatory` means the browser must come to rest on a snap position. Handed a
-   set that no longer lines up with the scrollport, and re-resolving mid-fling
-   because the bar just moved, it picks one that is nowhere near the swipe —
-   which is how one flick from the first frame ends up at the footer. The same
-   thing reproduces backwards: resizing during a smooth scroll to frame 1 landed
-   back at 0.
- 
-   `proximity` removes the compulsion. The browser still settles onto a frame
-   when a swipe ends near one, so the reel still reads as a reel, but it is
-   allowed to leave the scroll where the reader put it instead of resolving to
-   an answer that is wrong. Desktop keeps `mandatory`: there is no address bar
-   there, so the scrollport is stable and the premise never breaks. */
-@media (pointer: coarse) {
-  html {
-    scroll-snap-type: y proximity;
-  }
-}
+/* Touch keeps `mandatory`, same as the pointer. One flick, one frame, on every
+   device — which is the whole shape of the page.
+
+   This was `proximity` for a while and it had to come back, because proximity
+   is not a softer version of mandatory here: the frames are `position: sticky`
+   and stack, so coming to rest between two snap points is not a gentle
+   in-between, it is the outgoing frame holding the top of the screen while the
+   incoming one covers the bottom. Two half-frames at once. Every rest that is
+   not on a snap point looks broken.
+
+   What made `mandatory` unusable before was not touch, it was the footer.
+   Every frame is sized in `svh` so it will not resize when the address bar
+   hides — but `.paper-footer` was `dvh`, and it is in normal flow, so the bar
+   moving changed the height of the document itself mid-fling. The snap ladder
+   was being re-resolved against a scroll range that had just moved underneath
+   it, which is how one flick from the first frame reached the footer, and how a
+   smooth scroll to frame 1 landed back at 0. The reachability failure recorded
+   at the time — the footer's snap point at 8400 against a maximum scroll of
+   8299 — is the same thing seen from the other end: a footer one *small*
+   screen tall leaves less than one *current* screen of scroll beneath the last
+   snap point the moment the bar goes.
+
+   The footer is `lvh` now (see `.paper-footer`): tall enough to cover whatever
+   the window currently is, and fixed, because `lvh` does not move when the bar
+   does. So no element on the page resizes with the chrome any more, the
+   document height is constant, and the ladder mandatory is resolving against
+   holds still. That was the broken premise, not the snap type. */
 
 /* ---------------------------------------------------------------------------
    Frames.
@@ -250,14 +249,26 @@ html {
      covers the frame outright, so the page ends on paper and nothing else. */
   min-height: 100vh;
   min-height: 100svh;
-  /* `dvh` last, and only here. Every frame above is `svh` so it will not resize
-     mid-scroll, but the footer is the one element that has to cover whatever
-     the window currently is: at `svh` it comes up short by the height of a
-     hidden address bar, which both leaves a strip of the last frame showing
-     underneath and — because its snap point then sits past the end of the
-     scrollable range — makes that snap position unreachable. It is last in the
-     document, so there is no frame after it for a resize to disturb. */
-  min-height: 100dvh;
+  /* `lvh` last, and only here — the *large* viewport height, i.e. the window
+     with the mobile address bar retracted.
+
+     The footer is the one element that has to cover whatever the window
+     currently is: at `svh` it comes up short by the height of a hidden address
+     bar, leaving a strip of the last frame showing underneath it and putting
+     its own snap point past the end of the scrollable range, where it cannot be
+     reached.
+
+     `dvh` was the obvious answer and was wrong. It covers the window, but it
+     covers it by *resizing* — and this element is in normal flow, so every time
+     the address bar moved the height of the whole document moved with it, in
+     the middle of whatever fling the reader was in. That is what made mandatory
+     snapping unusable on a phone (see the `pointer: coarse` note above).
+
+     `lvh` covers the largest the window can get, and never changes. Slightly
+     too tall while the bar is showing, which costs a little blank paper below
+     the fold and nothing else — the block inside is centred and the background
+     is a flat colour. In exchange, nothing on this page resizes mid-scroll. */
+  min-height: 100lvh;
   /* The content block is a few hundred pixels tall inside that full screen;
      centring it keeps the page from ending on a heap of blank paper. */
   display: flex;
@@ -302,6 +313,45 @@ html {
   background-repeat: no-repeat;
 }
 
+
+/* Retired, on every viewport.
+
+   It was hidden on desktop once the contact cut was reshot with its own credit
+   bar — "Prayrak Mehta / POWERED BY LOGAM DIGITAL / ACTOR-CO-FOUNDER @ VHS"
+   printed along the bottom of the film. Two footers in a row is one too many,
+   and the drawn one is part of the film.
+
+   It stayed on phones only because the mobile reel had no such frame, so
+   without it the studio and production-house credits would not have appeared on
+   a phone at all. `Footer.mp4` is that frame, and it closes the mobile reel now
+   — see `FooterFrame` — so the reason to keep this is gone with it.
+
+   The rules above are left in place rather than deleted: `<Footer/>` is out of
+   `page.tsx`, so nothing renders and nothing is being hidden. If the drawn
+   frames are ever pulled, putting the component back is the whole of the way
+   back, and the paper it needs is still described here. ------------------- */
+
+/* The last frame has to be reachable, and on a phone that is not automatic.
+
+   The frames are `100svh` — the window with the address bar *showing* — so they
+   do not resize when it retracts. The scrollport does: `innerHeight` grows by
+   the height of that bar. Scroll range is `documentHeight - innerHeight`, so
+   the moment the bar goes, the range shrinks by exactly that much, and the
+   final snap point — which is one whole frame above the bottom — drops out of
+   reach. The page then refuses to scroll onto its own last screen, and
+   mandatory snapping spends the gesture arguing about where to land instead.
+
+   The paper footer used to absorb this, being a screen of its own at the end.
+   With it gone (above) something still has to, so this is what is left of it:
+   the difference between the largest the window gets and the smallest, and
+   nothing else. Exactly the height the address bar frees up.
+
+   Zero on a desktop, where `lvh` and `svh` are the same number because there is
+   no chrome that comes and goes — so it costs nothing where it is not needed.
+   --------------------------------------------------------------------------- */
+.frame-tail {
+  height: calc(100lvh - 100svh);
+}
 
 /* Torn top edge, so the footer looks lifted onto the page rather than butted
    against the video. A mask keeps it a real transparent tear — a solid shape
@@ -520,4 +570,559 @@ html {
     animation: none;
     transform: rotate(-1.4deg);
   }
+}
+
+/* ---------------------------------------------------------------------------
+   The slide rail — slides on a curve down the right-hand edge.
+
+   The navigator from a presentation, bent around a circle that stands just off
+   the right of the window. Four or five slides ride the near side of it, deepest
+   into the frame at the middle and receding to the edge above and below; the
+   rest are round the far side, and a drag carries them back into view. Desktop
+   only; the component is not mounted below `md`.
+
+   Each card works out its own place from two numbers: `--slot-i`, its position
+   in the running order, and `--turn`, how far the rail has been carried, which
+   `SlideRail.tsx` writes to the list as the reader drags. The angle between
+   them, `--phi`, is all the geometry below needs.
+
+   That arithmetic is done here rather than in React on purpose: with the trig
+   in CSS a drag writes one custom property and the browser lays out all eleven
+   cards off it, where doing it in JS would mean re-rendering eleven components
+   on every pointermove. -------------------------------------------------- */
+.slide-rail {
+  --card-w: clamp(5rem, 9.5vw, 9rem);
+  /* The thumbnails are 16:9 like the frames they stand for, so the whole slide
+     fits with nothing cropped — which is the entire point of a navigator. */
+  --card-h: calc(var(--card-w) * 9 / 16);
+
+  /* The radius of the arc the cards ride. Neighbours are one step apart around
+     it, so the gap between two at the middle is roughly `r * sin(step)` — at
+     2.1 card-heights that is comfortably more than a card, and they clear each
+     other with air to spare instead of overlapping. */
+  --arc-r: calc(var(--card-h) * 1.95);
+
+  /* How deep the middle of the arc leans into the frame. Half a card's width:
+     enough that the rail is plainly curved rather than a column with a wobble,
+     and not so much that it stands over the composition it is pointing at. */
+  --arc-bow: calc(var(--card-w) * 0.3);
+
+  position: absolute;
+  /* The ends of the arc sit against this inset and the middle bows away from
+     it, so the rail hugs the right edge exactly as far as it is not curving. */
+  right: clamp(0.5rem, 1.2vw, 1.25rem);
+  /* Low on the frame, not across the middle of it: dead centre put the arc over
+     the face in these compositions, and down here it runs beside the quieter
+     lower half.
+
+     This is as far down as it goes, and the limit is not the window — it is the
+     soundtrack cue card, which is fixed to the bottom-right corner and lands at
+     y 754-795 in a 813px window. The rail has to finish above that or the two
+     sit on top of each other when the sound is on. Every number here works
+     backwards from that: smaller thumbnails and a tighter arc make the rail
+     short enough to be pushed this low and still stop short of it. */
+  top: 68%;
+  /* Held there by a margin, not a `translateY`: the scroll fade owns
+     `transform` on this element and would wipe any offset written into it. */
+  margin-top: calc(var(--rail-h) / -2);
+  /* The arc's own extent. The cards at each end overhang it by half their own
+     height, and the chevrons sit inside it — see below — so the box is exactly
+     the circle and nothing else. */
+  --rail-h: calc(var(--arc-r) * 2);
+  height: var(--rail-h);
+
+}
+
+.slide-rail-stage {
+  position: relative;
+  width: calc(var(--card-w) + var(--arc-bow));
+  height: calc(var(--arc-r) * 2);
+  /* The drag surface. `grab` says the rail turns before anyone has tried it,
+     which is most of what a reader needs to know about it. */
+  cursor: grab;
+  /* Vertical drags belong to the rail, not to the page. Without this a drag
+     that starts here scrolls the page on a touch screen and the rail never sees
+     the gesture. */
+  touch-action: none;
+}
+
+.slide-rail-stage:active {
+  cursor: grabbing;
+}
+
+.slide-rail-drum {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  /* Fallback for a browser without CSS trig (see the `@supports` below): a
+     plain column, which is what the cards fall back to if the arc cannot be
+     computed. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--card-h) * 0.35);
+}
+
+.slide-rail-slot {
+  width: var(--card-w);
+  height: var(--card-h);
+  flex: none;
+}
+
+/* The arc. `sin()` and `cos()` are what make this a curve rather than a ladder;
+   everything in this block is skipped whole in a browser without them, leaving
+   the plain column above. */
+@supports (height: calc(1px * sin(45deg))) {
+  .slide-rail-drum {
+    display: block;
+  }
+
+  .slide-rail-slot {
+    /* Where this card sits on the arc right now: its own place in the order,
+       less however far the rail has been carried. Zero is the middle of the
+       arc, the point nearest the reader. */
+    --phi: calc((var(--slot-i) - var(--turn, 0)) * var(--step, 33deg));
+
+    position: absolute;
+    top: 50%;
+    right: 0;
+    margin-top: calc(var(--card-h) / -2);
+
+    /* Down the arc and into the frame. `sin` walks the card along it; `cos` is
+       what pulls the middle of the arc leftward and lets the ends fall back to
+       the window edge, and it doubles as the depth cue — the same factor scales
+       the card, so the rail reads as a surface coming round toward the reader
+       rather than a list sliding past.
+
+       Position and size only: no rotation. The cards travel along the curve but
+       never tilt with it, so a thumbnail is always square to the reader and the
+       slide inside it stays readable. A tangent tilt was tried here and taken
+       back out — it turns the pictures as they go round, which is exactly what
+       a thumbnail must not do. */
+    transform: translateY(calc(var(--arc-r) * sin(var(--phi))))
+      translateX(calc(var(--arc-bow) * -1 * cos(var(--phi))))
+      scale(calc(0.84 + 0.16 * cos(var(--phi))));
+
+    /* Fades out well before the card would reach the side of the circle, so
+       slides leave by turning away rather than by blinking off at an edge.
+       `cos` goes negative round the far side, which the clamp floors at zero —
+       so everything back there costs nothing to draw and cannot be seen. */
+    opacity: clamp(0, calc(cos(var(--phi)) * 1.55 - 0.28), 1);
+  }
+
+  /* Only when settling. During a drag the rail has to track the pointer
+     exactly — a transition there would lag the hand by its own duration and
+     feel like ice. */
+  .slide-rail-drum.is-turning .slide-rail-slot {
+    transition: transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 320ms ease-out;
+  }
+}
+
+.slide-rail-card {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  background: #14110d;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 3px;
+  /* A cream edge, not a hairline: these are slides in a collage of paper, and a
+     thin translucent ring vanished against the busy frame behind them. It reads
+     as the white border of a photographic print, which is the same object the
+     footer's tickets and the intro's torn edges are made of. */
+  border: 2px solid rgba(243, 237, 223, 0.82);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
+  transition: border-color 220ms ease-out, box-shadow 220ms ease-out;
+}
+
+/* A card faded out round the far side of the arc is not a target. Without this
+   the rail quietly takes clicks meant for the frame behind it, from cards
+   nobody can see. */
+.slide-rail-card[data-reachable="false"] {
+  pointer-events: none;
+}
+
+.slide-rail-card:hover,
+.slide-rail-card:focus-visible {
+  border-color: #fffaf0;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.65);
+}
+
+.slide-rail-card:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
+}
+
+.slide-rail-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* The stills arrive after the intro has had the connection to itself (see
+     `ART_DELAY`), and a card round the far side is not fetched until it turns
+     toward the reader — so every one of them needs a way in. Fading the picture
+     rather than the card means the rail is built and lit from the first frame
+     and only its pictures arrive late. */
+  opacity: 0;
+  transition: opacity 320ms ease-out;
+}
+
+.slide-rail-art[data-loaded="true"] {
+  /* Knocked back a little: the rail is a hint, not eleven more videos playing
+     beside the first. Much below this and the thumbnails stop being
+     recognisable, which costs the rail its job. */
+  opacity: 0.88;
+}
+
+/* The two chevrons. The drag is the real control and the cursor advertises it,
+   but a drag is invisible to a keyboard and easy to miss with a mouse, so the
+   rail also has a pair of buttons that carry it one slide.
+
+   They are cut from the same stock as the footer's tickets and the soundtrack
+   cue card — cream paper, a hairline of ink round the edge, the same lift off
+   the page — so the controls belong to the collage rather than arriving as
+   browser furniture on top of it. See `.paper-arrow` below for the surface. */
+.slide-rail-step {
+  /* Absolute, and just inside the ends of the arc rather than stacked above and
+     below it. Stacked, the pair added some 80px to the rail's height, and every
+     one of those pixels came off how far down the frame the rail could be
+     pushed before it reached the soundtrack card. In here they cost nothing:
+     what they cover is the last card on each end, which by then is down to a
+     few percent opacity. */
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 1;
+
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.slide-rail-step:first-of-type {
+  top: -8px;
+}
+
+.slide-rail-step:last-of-type {
+  bottom: -8px;
+}
+
+.slide-rail-step:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
+
+/* The arrival — the cards in the opening stretch of the arc only, one at a
+   time, each on the delay `SlideRail.tsx` hands it in `--slot-deal`. The rest
+   are round the far side and have nothing to announce.
+
+   Stepped, like everything else that moves on this page: each card snaps
+   through three poses rather than gliding, so the rail is dealt out by the same
+   hand that shot the frames on twos. The wait before the first lets the intro
+   frame register; a navigator there from the first paint reads as part of the
+   video's own composition and stops being a signpost.
+
+   The animation is on the card and moves the card only — `translateX` in its
+   own plane, sliding it in from off the right. Deliberately not on the slot:
+   the slot's transform is what holds the card on the arc, and an animation
+   replaces `transform` outright, so animating there would take the card off the
+   curve for the length of the deal and put it back afterwards.
+
+   `backwards`, not `both`: `backwards` holds the first keyframe through the
+   delay, which is what keeps an undealt card off the screen; `both` would pin
+   the last one forever, and a card frozen mid-deal would no longer answer the
+   hover rule above. */
+@keyframes slot-deal {
+  0%   { opacity: 0; transform: translateX(85%); }
+  55%  { opacity: 1; transform: translateX(-6%); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.slide-rail-card[data-dealt="true"] {
+  animation: slot-deal 360ms steps(1, end) var(--slot-deal, 900ms) backwards;
+}
+
+/* Reduced motion keeps the rail — it is information, and carrying it round is
+   the reader's own doing — and drops what moves on its own: no stepped deal,
+   and no easing when it settles, so a step lands where it was asked to
+   instantly. */
+@media (prefers-reduced-motion: reduce) {
+  .slide-rail-card[data-dealt="true"] {
+    animation: none;
+  }
+  .slide-rail-drum.is-turning .slide-rail-slot {
+    transition: none;
+  }
+  .slide-rail-art {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   The scroll cue (ScrollCue.tsx).
+
+   The arrow at the foot of the first frame. The rail beside it says what is
+   below; this says that anything is — and it is the only one of the two that
+   renders on a phone, so it carries that on its own there. ---------------- */
+.scroll-cue {
+  position: absolute;
+  left: 50%;
+  /* Not flush with the bottom edge. These frames carry their own content right
+     down to it — the intro's is a centred "ACTOR" label with a rule through it,
+     which an arrow sitting at the foot of the screen lands squarely on top of
+     and reads as a glitch. A tenth of the screen up clears it and still sits
+     plainly in the lower third, where a scroll cue belongs. */
+  bottom: clamp(3rem, 10svh, 5.5rem);
+  /* Centred with `translate`, not with `transform`: the fade handler owns
+     `transform` on this element and would wipe any centring written into it.
+     They are separate properties and both apply — `translate` resolves first. */
+  translate: -50% 0;
+
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.scroll-cue:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* The nudge. Stepped, like everything else that moves on this page: the arrow
+   hops down its own two or three pixels and jumps back rather than easing, so
+   it belongs to the same hand as the stop-motion footer. A smooth bob would be
+   the one eased thing on the page and would read as a different piece of
+   software.
+
+   It is a `translate` animation on purpose, for the same reason the centring
+   above is: `transform` belongs to the scroll fade, and an animation on that
+   property would replace it wholesale. */
+@keyframes cue-nudge {
+  0%   { translate: -50% 0; }
+  30%  { translate: -50% 5px; }
+  55%  { translate: -50% 1px; }
+  80%  { translate: -50% 3px; }
+}
+
+.scroll-cue {
+  /* Long enough to read as a beckon rather than a twitch, and it starts after
+     the frame has landed — the same beat the rail waits for. */
+  animation: cue-nudge 1.6s steps(1, end) 900ms infinite;
+}
+
+/* An arrow that will not stop moving is decorative motion the reader did not
+   ask for; the cue still reads as an arrow standing still. */
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Paper arrows.
+
+   The surface every control on the first frame is cut from: the rail's two
+   chevrons and the scroll cue. It is the cue card's stock (`.paper-cue`) at
+   button size — cream, a grain of two offset dot grids at very low contrast, a
+   hairline of ink, and the lift the footer's tickets get.
+
+   Ink on cream rather than cream on smoke, which is what these were: a
+   translucent dark disc reads as an interface element borrowed from somewhere
+   else, and on a pale scrap of the collage it disappears outright. Paper cannot
+   disappear against paper — it is opaque, and it carries its own edge. ----- */
+.paper-arrow {
+  border: 1px solid rgba(26, 26, 26, 0.4);
+  background-color: #efe7d6;
+  /* The grain, so it is paper and not a beige circle. Cheap, and it survives
+     being scaled. */
+  background-image:
+    radial-gradient(rgba(60, 45, 20, 0.075) 1px, transparent 1px),
+    radial-gradient(rgba(60, 45, 20, 0.05) 1px, transparent 1px);
+  background-size: 7px 7px, 11px 11px;
+  background-position: 0 0, 3px 4px;
+  color: #1a1a1a;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+  transition: background-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.paper-arrow:hover {
+  /* Brighter paper, lifted a little further off the frame — the same move the
+     thumbnails make under the cursor. */
+  background-color: #fbf5e7;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paper-arrow {
+    transition: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Hotspots — clickable regions laid on a frame's artwork.
+
+   Used by the contact frame, whose last shot is a notepad with an email address
+   and a phone number written on it in longhand. The problem is that a frame is
+   `object-fit: cover`: the video is scaled until it fills the window and the
+   overhang is cropped, and how much is cropped changes with the window's shape.
+   So a box placed at "32% across, 47% down" sits on the email in one window and
+   next to it in another.
+
+   This block undoes that. `ContactHotspots` supplies the artwork's own size and
+   each box's rectangle in the artwork's own pixels, and the rules below redo the
+   exact arithmetic `cover` did — scale to fill, centre, crop — to turn those
+   numbers back into a position on screen. The result holds at any size, in
+   either cut, with no measuring and no resize handler.
+
+   Container query units are what make it possible: `cqw`/`cqh` are a percentage
+   of the *container*, so `100cqw / --art-w` is one artwork pixel expressed in
+   screen pixels, which is the scale factor `cover` chose. ----------------- */
+.frame-hotspots {
+  position: absolute;
+  inset: 0;
+  /* The box the boxes are measured against — the video's own, since this is
+     stretched over it. `size` rather than `inline-size` because the arithmetic
+     below needs the height as well as the width. */
+  container-type: size;
+  /* Not a layer over the frame: only the two links inside it take the pointer,
+     so everything around them still belongs to the page underneath. */
+  pointer-events: none;
+}
+
+.frame-hotspot {
+  /* What `cover` did: scale the artwork by whichever axis needs the most to
+     fill the box, so the other axis overflows and is cropped. */
+  --scale: max(100cqw / var(--art-w), 100cqh / var(--art-h));
+  /* Where the artwork's own top-left corner ended up, once scaled and centred.
+     Usually negative on one axis — that is the half of the overflow that was
+     cropped off the top or the left. */
+  --art-x: calc((100cqw - var(--art-w) * var(--scale)) / 2);
+  --art-y: calc((100cqh - var(--art-h) * var(--scale)) / 2);
+
+  position: absolute;
+  left: calc(var(--art-x) + var(--x) * var(--scale));
+  top: calc(var(--art-y) + var(--y) * var(--scale));
+  width: calc(var(--w) * var(--scale));
+  height: calc(var(--h) * var(--scale));
+
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* The ring round an icon the artwork drew itself.
+
+   The reshot desktop contact frame puts an envelope, a handset and an Instagram
+   mark under its three notes. The affordance is therefore already in the
+   picture, and a button of ours on top of it would be two icons saying the same
+   thing — so this rings the one that is there instead.
+
+   Transparent in the middle, always: the icon underneath is the artwork and
+   must stay crisp. What makes it read as a control is the ink hairline and the
+   cream glow sitting just outside it, as though the icon had been circled on
+   the paper — which is exactly what the pen does elsewhere on that frame.
+
+   Positioned and sized in the artwork's own pixels through `--scale`, like the
+   hotspot it belongs to, so it stays on its icon at every window size. */
+.hotspot-ring {
+  position: absolute;
+  left: calc(var(--ring-x) * var(--scale));
+  top: calc(var(--ring-y) * var(--scale));
+  width: calc(var(--ring-r) * 2 * var(--scale));
+  height: calc(var(--ring-r) * 2 * var(--scale));
+  translate: -50% -50%;
+
+  border-radius: 9999px;
+  border: calc(1.5 * var(--scale)) solid rgba(26, 26, 26, 0.32);
+  background: radial-gradient(closest-side, rgba(255, 250, 235, 0) 62%, rgba(255, 248, 228, 0.85));
+  box-shadow: 0 0 0 calc(3 * var(--scale)) rgba(255, 248, 228, 0.5);
+  /* The ring belongs to the paper, not the pointer: the link behind it takes
+     the click, and it covers only part of that link's box. */
+  pointer-events: none;
+  transition: border-color 160ms ease-out, box-shadow 160ms ease-out, scale 160ms ease-out;
+}
+
+/* Under the cursor it closes in on the icon — a firmer line and a wider glow,
+   the way a second pass round something already circled would look. */
+.frame-hotspot:hover .hotspot-ring,
+.frame-hotspot:focus-visible .hotspot-ring {
+  border-color: rgba(26, 26, 26, 0.72);
+  box-shadow: 0 0 0 calc(6 * var(--scale)) rgba(255, 248, 228, 0.72);
+  scale: 1.08;
+}
+
+/* Drawn on after the clip has finished writing its note — see `PIN_AFTER` — and
+   in the order the notes were written. Stepped, like everything else that moves
+   on this page. `backwards` holds it clear through the delay so it is not
+   sitting round a blank rule while the clip is still writing. */
+@keyframes ring-draw {
+  0%   { opacity: 0; scale: 0.5; }
+  55%  { opacity: 1; scale: 1.14; }
+  100% { opacity: 1; scale: 1; }
+}
+
+.reveal[data-revealed="true"] .hotspot-ring {
+  animation: ring-draw 320ms steps(1, end) var(--pin-delay, 1900ms) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hotspot-ring {
+    transition: none;
+  }
+  .reveal[data-revealed="true"] .hotspot-ring {
+    animation: ring-draw 1ms steps(1, end) var(--pin-delay, 1900ms) backwards;
+  }
+}
+
+/* The whole row takes a faint wash on hover, so it is clear the target is the
+   line and not only the ring drawn around the icon on it. */
+.frame-hotspot:hover,
+.frame-hotspot:focus-visible {
+  background-color: rgba(26, 26, 26, 0.06);
+  border-radius: 4px;
+}
+
+.frame-hotspot:focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 2px;
+}
+
+/* Without container query units the arithmetic above collapses and the boxes
+   would land somewhere arbitrary on the frame — a link in the wrong place is
+   worse than no link, and the same two details are a scroll away in the footer
+   either way. */
+@supports not (width: 1cqw) {
+  .frame-hotspots {
+    display: none;
+  }
+}
+
+/* Text for screen readers only. The hotspots carry the address and the number
+   as real text inside them, because a link whose entire content is a picture
+   has nothing to announce — and `aria-label` alone is not selectable or
+   translatable. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
