@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // One track per film, keyed by the `data-name` that is already on every frame.
 // Keeping the table here rather than threading an `audioSrc` prop through six
@@ -42,7 +42,25 @@ const SFX = {
   snap: "/sfx/pencil-snap.mp3",
 } as const;
 
-type SfxName = keyof typeof SFX;
+export type SfxName = keyof typeof SFX;
+
+// The foley, reachable from outside this file.
+//
+// Anything on the page that handles paper — the frames as they turn, the slide
+// rail as it is dragged — should sound like it, and none of those places has
+// any other business with the soundtrack. A context would put a provider in
+// their way for one function; this is the same module-scope pattern the mode
+// store above already uses.
+//
+// It holds a player only while the reader has sound on, so a caller cannot make
+// noise on a silent page by forgetting to check — there is nothing registered
+// to make it with.
+let foley: ((name: SfxName) => void) | null = null;
+
+/** Play one of the page's foley sounds. A no-op unless sound is on. */
+export function playFoley(name: SfxName) {
+  foley?.(name);
+}
 
 const SFX_VOLUME = 0.38;
 
@@ -138,51 +156,22 @@ function sectionGain(restingTop: number): number {
  */
 type SoundMode = "asking" | "on" | "off";
 
-// Remembered for the visit, not beyond it. `sessionStorage` rather than
-// `localStorage` on purpose: a reader who refreshes, or follows a link out and
-// comes back, should not be asked the same question again — but someone
-// returning next week is a new arrival and the card is part of the way in.
+// Nothing about the answer is stored, on purpose.
 //
-// It cannot cache the browser's permission, only the reader's answer. User
-// activation is per page load, so a restored "on" still needs a gesture before
-// anything is audible; that is what the pointerdown/keydown arming is for.
-const MODE_KEY = "prayrak:sound-mode";
-
-// Read through an external store rather than mirrored into state by an effect,
-// matching `useIsDesktop`: the value is correct on the first client render
-// instead of one paint later, so a returning reader never sees the entry card
-// flash up before it is dismissed again.
-const modeListeners = new Set<() => void>();
-
-function emitModeChange() {
-  for (const listener of modeListeners) listener();
-}
-
-function subscribeMode(onStoreChange: () => void) {
-  modeListeners.add(onStoreChange);
-  return () => {
-    modeListeners.delete(onStoreChange);
-  };
-}
-
-function getModeSnapshot(): SoundMode {
-  const saved = window.sessionStorage.getItem(MODE_KEY);
-  return saved === "on" || saved === "off" ? saved : "asking";
-}
-
-// The server cannot know what this visit already answered, and guessing "on"
-// would render a page with no entry card that then has to grow one.
-function getModeServerSnapshot(): SoundMode {
-  return "asking";
-}
+// It used to live in `sessionStorage`, so a refresh or a trip out and back
+// skipped the card — and skipping the card meant arriving in silence, because
+// the click that dismisses it is also the user activation every browser
+// requires before audio may be audible at all. A remembered "on" cannot carry
+// that activation across a page load; only a fresh gesture can. So the visit
+// that was meant to feel remembered was the one visit with no music.
+//
+// Asking every time is what makes the music play every time. The card is one
+// click on the way in, and it is the click the whole soundtrack depends on.
 
 export default function SoundProvider({ children }: { children: React.ReactNode }) {
-  const mode = useSyncExternalStore(subscribeMode, getModeSnapshot, getModeServerSnapshot);
-
-  const setMode = useCallback((next: SoundMode) => {
-    window.sessionStorage.setItem(MODE_KEY, next);
-    emitModeChange();
-  }, []);
+  // Plain state: every page load starts at `asking`, server and client alike,
+  // so there is no stored value to read and no hydration mismatch to avoid.
+  const [mode, setMode] = useState<SoundMode>("asking");
 
   // The title on the card, and whether sound is genuinely coming out. The card
   // claims "Now playing", so it is only honest if it tracks real playback
@@ -237,6 +226,13 @@ export default function SoundProvider({ children }: { children: React.ReactNode 
     el.currentTime = 0;
     el.play().catch(() => {});
   }, []);
+
+  useEffect(() => {
+    foley = mode === "on" ? playSfx : null;
+    return () => {
+      foley = null;
+    };
+  }, [mode, playSfx]);
 
   const applyVolume = useCallback(() => {
     const audio = audioRef.current;

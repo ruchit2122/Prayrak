@@ -1,18 +1,9 @@
-// ---------------------------------------------------------------------------
-// SET THIS BEFORE DEPLOYING.
-//
-// This is a guess derived from the email in the contact video
-// (prayrakmehta@gmail.com) — it has NOT been verified. A wrong value here
-// sends visitors to a stranger's profile, so confirm the real handle and
-// update this one line. Everything else in this footer is taken from the
-// contact video itself and is accurate.
-const INSTAGRAM_HANDLE = "prayrakmehta";
+import { EMAIL, INSTAGRAM_HANDLE, PHONE_DIAL, PHONE_DISPLAY } from "@/lib/contact";
 
-// Both read off the notepad in the final frame of the contact section, so the
-// footer and the video can never disagree.
-const EMAIL = "prayrakmehta@gmail.com";
-const PHONE_DISPLAY = "+91 99535 91413";
-const PHONE_DIAL = "+919953591413";
+// NOTE: this footer is hidden at `md` and above — see `.paper-footer` in
+// globals.css. The reshot desktop contact frame ends with its own credit bar,
+// so on a desktop the film provides the footer and this one would be a second.
+// It still renders on phones, whose cut of that frame has no bar.
 
 // Studio credit in the bottom bar.
 const STUDIO_NAME = "Logam Digital";

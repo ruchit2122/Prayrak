@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useIsDesktop } from "@/lib/useIsDesktop";
 import { useSlideIn, type FrameEnter } from "@/lib/useSlideIn";
+import { mediaSrc } from "@/lib/media";
 
 type SectionVideoProps = {
   dataName: string;
@@ -10,6 +11,12 @@ type SectionVideoProps = {
   mobileSrc: string;
   /** Which edge this frame arrives from. Defaults to the plain upward stack. */
   enter?: FrameEnter;
+  /**
+   * Anything laid over the video — currently only the contact frame's two
+   * hotspots. It renders inside the same box as the `<video>`, which is what
+   * lets an overlay be positioned against the frame rather than the window.
+   */
+  children?: React.ReactNode;
 };
 
 // Loading and revealing are deliberately two different triggers. Bytes start
@@ -32,6 +39,7 @@ export default function SectionVideo({
   desktopSrc,
   mobileSrc,
   enter = "up",
+  children,
 }: SectionVideoProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -91,7 +99,10 @@ export default function SectionVideo({
   // Only ever one src, and only the variant this viewport actually displays.
   // Rendering both and hiding one with CSS still downloads both.
   const variant = isDesktop === null ? undefined : isDesktop ? desktopSrc : mobileSrc;
-  const src = shouldLoad ? variant : undefined;
+  // Resolved to its content-hashed URL on the way out. The props stay readable
+  // paths; `mediaSrc` is what turns one into something a 30-day cache can hold
+  // safely — see `scripts/hash-media.mjs`.
+  const src = shouldLoad && variant ? mediaSrc(variant) : undefined;
 
   // The first frame of the clip, sitting beside it as a .webp of the same name.
   // Without it a section is flat black until the video has decoded, so on a slow
@@ -102,7 +113,10 @@ export default function SectionVideo({
   // undo the lazy loading these observers exist to do. Sharing the trigger
   // costs nothing, because a ~40KB poster lands long before the ~1MB clip
   // beside it — which is exactly the gap it is there to cover.
-  const poster = shouldLoad ? variant?.replace(/\.mp4$/, ".webp") : undefined;
+  //
+  // Derived first, hashed second: the poster is a separate file with a hash of
+  // its own, so the `.mp4`->`.webp` swap has to happen before the lookup.
+  const poster = shouldLoad && variant ? mediaSrc(variant.replace(/\.mp4$/, ".webp")) : undefined;
 
   // Playback is tied to `revealed`, NOT to `src`. Loading starts a viewport and
   // a half early so the clip is buffered on arrival, but these clips are only
@@ -159,6 +173,7 @@ export default function SectionVideo({
             muted
             playsInline
           />
+          {children}
         </div>
       </section>
     </>

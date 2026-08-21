@@ -10,7 +10,7 @@ import SisterhoodSection from "@/components/SisterhoodSection";
 import UpcomingReleasesSection from "@/components/UpcomingReleasesSection";
 import CoFounder from "@/components/CoFounder";
 import ContactSection from "@/components/ContactSection";
-import Footer from "@/components/Footer";
+import FooterFrame from "@/components/FooterFrame";
 
 export default function Home() {
   return (
@@ -34,7 +34,12 @@ export default function Home() {
       <UpcomingReleasesSection />
       <CoFounder />
       <ContactSection />
-      <Footer />
+      {/* Phones only — on desktop the contact frame above already ends with the
+          credit bar, so the reel closes there. See `FooterFrame`. */}
+      <FooterFrame />
+      {/* Keeps the last frame reachable once the address bar retracts. See
+          `.frame-tail` in globals.css. */}
+      <div className="frame-tail" aria-hidden="true" />
     </main>
   );
 }
